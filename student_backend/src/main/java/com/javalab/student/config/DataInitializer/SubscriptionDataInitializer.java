@@ -1,6 +1,7 @@
 /*
 package com.javalab.student.config.DataInitializer;
 
+
 import com.javalab.student.entity.*;
 import com.javalab.student.repository.*;
 import lombok.RequiredArgsConstructor;

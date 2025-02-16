@@ -1,7 +1,7 @@
 package com.javalab.student.entity.cartOrder;
 
 import com.javalab.student.entity.BaseEntity;
-import com.javalab.student.entity.Product;
+import com.javalab.student.entity.product.Product;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

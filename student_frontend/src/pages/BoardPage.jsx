@@ -35,23 +35,47 @@ function BoardPage() {
         localStorage.setItem("currentBoard", board);
     };
 
+    const buttonStyle = (isSelected) => ({
+        color: isSelected ? "#4169E1" : "text.secondary",
+        px: 2,
+        py: 0.5,
+        fontSize: { xs: '0.9rem', sm: '1rem' },
+        fontWeight: "bold",
+        minWidth: 'auto',
+        position: 'relative',
+        borderRadius: 0,
+        cursor: "pointer",
+        '&:hover': {
+            backgroundColor: "transparent",
+        },
+        '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: -1,
+            left: 0,
+            width: '100%',
+            height: isSelected ? '2px' : '0px',
+            backgroundColor: isSelected ? "#4169E1" : "transparent",
+        },
+    });
+
     return (
         <Container
             disableGutters
-                sx={{
-                    overflowX: 'hidden',  // 가로 스크롤 방지
-                    maxWidth: '100vw',   // 뷰포트 너비 제한
-                    boxSizing: 'border-box' // 박스 크기 계산
-                }}
-       >
+            sx={{
+                overflowX: 'hidden',
+                maxWidth: '100vw',
+                boxSizing: 'border-box'
+            }}
+        >
             <Typography
                 variant="h4"
                 component="h1"
                 gutterBottom
                 align="left"
                 sx={{
-                    my: 4,
-                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }, // 반응형 폰트 크기
+                    my: 5,
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
                     px: { xs: 2, sm: 3 },
                 }}
             >
@@ -60,47 +84,25 @@ function BoardPage() {
 
             <Box sx={{
                 display: 'flex',
-                justifyContent: 'center',
-                mb: 4,
-                flexDirection: { xs: 'column', sm: 'row' }, // 모바일에서는 세로로 배치
-                width: '100%',
-                overflowX: 'hidden' // 가로 스크롤 방지
+                justifyContent: 'flex-start',
+                mb: 1,
+                ml: { xs: 2, sm: 3 },
             }}>
                 <Button
                     onClick={() => handleBoardChange("news")}
-                    sx={{
-                        borderRadius: 0,
-                        backgroundColor: currentBoard === "news" ? "#999999" : "#f5f5f5",
-                        color: currentBoard === "news" ? "#fff" : "#000",
-                        px: { xs: 2, sm: 6 }, // 반응형 패딩
-                        py: 1,
-                        fontSize: { xs: '1rem', sm: '1.1rem' }, // 반응형 폰트 크기
-                        fontWeight: "bold",
-                        width: { xs: '100%', sm: 'auto' }, // 모바일에서는 전체 너비
-                        mb: { xs: 1, sm: 0 } // 모바일에서 버튼 사이 간격
-                    }}
+                    sx={buttonStyle(currentBoard === "news")}
                 >
                     공지사항
                 </Button>
                 <Button
                     onClick={() => handleBoardChange("faq")}
-                    sx={{
-                        borderRadius: 0,
-                        backgroundColor: currentBoard === "faq" ? "#999999" : "#f5f5f5",
-                        color: currentBoard === "faq" ? "#fff" : "#000",
-                        px: { xs: 2, sm: 6 }, // 반응형 패딩
-                        py: 1,
-                        fontSize: { xs: '1rem', sm: '1.1rem' }, // 반응형 폰트 크기
-                        fontWeight: "bold",
-                        width: { xs: '100%', sm: 'auto' } // 모바일에서는 전체 너비
-                    }}
+                    sx={buttonStyle(currentBoard === "faq")}
                 >
                     자주 묻는 질문
                 </Button>
             </Box>
 
-            {/* 현재 선택된 게시판에 따라 렌더링 */}
-            <Box sx={{ overflowX: 'hidden', width: '100%',padding: "0px !important" }}> {/* 추가적인 가로 스크롤 방지 */}
+            <Box sx={{ overflowX: 'hidden', width: '100%', paddingTop:"16px" }}>
                 {currentBoard === "news" ? <NewsBoardPage /> : <FAQBoardPage />}
             </Box>
         </Container>

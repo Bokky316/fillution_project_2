@@ -2,7 +2,7 @@
   <library name="Gradle: org.modelmapper:modelmapper:3.2.0" type="java-imported" external-system-id="GRADLE">
     <properties groupId="org.modelmapper" artifactId="modelmapper" version="3.2.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../../repository/gradle/caches/modules-2/files-2.1/org.modelmapper/modelmapper/3.2.0/7664b15466a898625b394af6000439c5799a5d2b/modelmapper-3.2.0.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.modelmapper/modelmapper/3.2.0/7664b15466a898625b394af6000439c5799a5d2b/modelmapper-3.2.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

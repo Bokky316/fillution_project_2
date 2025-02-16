@@ -1,6 +1,7 @@
 package com.javalab.student.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.javalab.student.entity.product.Product;
 import jakarta.persistence.*;
 import lombok.*;
 

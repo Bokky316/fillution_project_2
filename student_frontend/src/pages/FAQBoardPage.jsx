@@ -63,7 +63,7 @@ function FAQBoardPage() {
     // 로딩 중일 경우 "로딩 중..." 메시지 표시
     if (loading) return <Typography align="center" variant="h6">로딩 중...</Typography>;
     // 에러가 발생했을 경우 에러 메시지 표시
-    if (error) return <Typography align="center" color="error" variant="h6">{error}</Typography>;
+    if (error) return <Typography align="center" sx={{ color: '#EF5503' }} variant="h6">{error}</Typography>;
 
     // 게시글 클릭 시 게시글 내용 확장/축소
     const handlePostClick = (postId) => {
@@ -86,7 +86,7 @@ function FAQBoardPage() {
         if (postToDelete) {
             try {
                 await dispatch(deleteFAQPost(postToDelete)).unwrap();
-                setSnackbar({ open: true, message: "게시글이 삭제되었습니다." });
+                setSnackbar({ open: true, message: "게시글이 성공적으로 삭제되었습니다." });
             } catch (err) {
                 setSnackbar({ open: true, message: "게시글 삭제에 실패했습니다." });
             }
@@ -113,49 +113,41 @@ function FAQBoardPage() {
                 maxWidth: { xs: '100%', sm: '100%' },
                 margin: '0 auto',
                 padding: { xs: '0 8px', sm: '0 16px', md: '0 24px' },
-                mb: { xs: 20, sm: 18 },
+                mb: { xs: 5, sm: 5 },
                 boxSizing: 'border-box'
             }}
         >
-            <Typography
-                variant="h4"
-                align="center"
-                gutterBottom
-                sx={{
-                    mt: 3,
-                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
-                }}
-            >
-                자주 묻는 질문
-            </Typography>
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    flexWrap: 'wrap',
-                    gap: { xs: 1, sm: 1.5 },
-                    mb: 3,
-                    mx: { xs: -1, sm: 0 }
-                }}
-            >
-                {categories.map(category => (
-                    <Button
-                        key={category}
-                        onClick={() => dispatch(setSelectedCategory(category))}
-                        variant="contained"
-                        size={isMobile ? "small" : "medium"}
-                        sx={{
-                            margin: { xs: '2px', sm: '5px' },
-                            backgroundColor: selectedCategory === category ? "lightblue" : undefined,
-                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                            padding: { xs: '4px 8px', sm: '6px 16px' },
-                            minWidth: { xs: 'auto', sm: '80px' }
-                        }}
-                    >
-                        {category}
-                    </Button>
-                ))}
-            </Box>
+            {/* 변경된 카테고리 표시 부분 */}
+             <Box
+                 sx={{
+                     display: 'flex',
+                     justifyContent: 'flex-start',
+                     flexWrap: 'wrap',
+                     gap: { xs: 0.3, sm: 0.5 },
+                     mb: 3,
+                     mx: { xs: -0.3, sm: 0 }
+                 }}
+             >
+                 {categories.map(category => (
+                     <Typography
+                         key={category}
+                         component="span"
+                         onClick={() => dispatch(setSelectedCategory(category))}
+                         sx={{
+                             cursor: 'pointer',
+                             margin: { xs: '0.5px', sm: '2px' },
+                             fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                             padding: { xs: '2px 4px', sm: '3px 8px' },
+                             minWidth: { xs: 'auto', sm: '50px' },
+                             fontWeight: 'bold',
+                             textDecoration: 'none',
+                             color: selectedCategory === category ? '#4169E1' : 'grey',
+                         }}
+                     >
+                         {category}
+                     </Typography>
+                 ))}
+             </Box>
             {userRole === 'ADMIN' && (
                 <Box
                     display="flex"
@@ -165,12 +157,13 @@ function FAQBoardPage() {
                 >
                     <Button
                         variant="contained"
-                        color="primary"
                         size={isMobile ? "small" : "medium"}
                         onClick={() => navigate('/post/create', {
                             state: { defaultCategory: '자주 묻는 질문' }
                         })}
                         sx={{
+                            backgroundColor: '#4169E1',
+                            color: 'white',
                             fontSize: { xs: '0.8rem', sm: '0.875rem' }
                         }}
                     >
@@ -190,7 +183,7 @@ function FAQBoardPage() {
             >
                 <Table>
                     <TableHead>
-                        <TableRow sx={{ borderTop: '2px solid #888' }}>
+                        <TableRow sx={{ borderTop: '2px solid #888'}}>
                             <TableCell
                                 align="center"
                                 sx={{
@@ -238,7 +231,7 @@ function FAQBoardPage() {
                                             align="center"
                                             sx={{
                                                 padding: { xs: 1, sm: 2 },
-                                                fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                                                fontSize: { xs: '13px', sm: '13px' }
                                             }}
                                         >
                                             {post.category}
@@ -260,10 +253,14 @@ function FAQBoardPage() {
                                                     sx={{
                                                         cursor: "pointer",
                                                         fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                                                        whiteSpace: 'nowrap',
+                                                        fontWeight: 'bold', // 제목 bold 처리
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
-                                                        maxWidth: isMobile ? 'calc(100% - 60px)' : 'none'
+                                                        maxWidth: isMobile ? 'calc(100% - 60px)' : 'none',
+                                                        wordBreak: 'break-word',  // 긴 단어 줄바꿈
+                                                        display: '-webkit-box', // 추가
+                                                        WebkitLineClamp: 2,       // 최대 2줄
+                                                        WebkitBoxOrient: 'vertical' // 추가
                                                     }}
                                                 >
                                                     {post.title}
@@ -277,32 +274,34 @@ function FAQBoardPage() {
                                                     }}>
                                                         <Button
                                                             variant="outlined"
-                                                            color="primary"
+                                                            sx={{
+                                                                borderColor: '#29B6F6',
+                                                                color: '#29B6F6',
+                                                                fontSize: '0.7rem',
+                                                                minWidth: 'auto',
+                                                                padding: '2px 8px'
+                                                            }}
                                                             size="small"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 handleEditPost(post.id);
-                                                            }}
-                                                            sx={{
-                                                                fontSize: '0.7rem',
-                                                                minWidth: 'auto',
-                                                                padding: '2px 8px'
                                                             }}
                                                         >
                                                             수정
                                                         </Button>
                                                         <Button
                                                             variant="outlined"
-                                                            color="error"
+                                                            sx={{
+                                                                borderColor: '#EF5350',
+                                                                color: '#EF5350',
+                                                                fontSize: '0.7rem',
+                                                                minWidth: 'auto',
+                                                                padding: '2px 8px'
+                                                            }}
                                                             size="small"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 handleDeletePost(post.id);
-                                                            }}
-                                                            sx={{
-                                                                fontSize: '0.7rem',
-                                                                minWidth: 'auto',
-                                                                padding: '2px 8px'
                                                             }}
                                                         >
                                                             삭제
@@ -321,24 +320,26 @@ function FAQBoardPage() {
                                                 }}>
                                                     <Button
                                                         variant="outlined"
-                                                        color="primary"
-                                                        onClick={() => handleEditPost(post.id)}
                                                         sx={{
-                                                            fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                                                            width: '100%',
-                                                            maxWidth: '120px'
+                                                            borderColor: '#29B6F6',
+                                                            color: '#29B6F6',
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditPost(post.id);
                                                         }}
                                                     >
                                                         수정
                                                     </Button>
                                                     <Button
                                                         variant="outlined"
-                                                        color="error"
-                                                        onClick={() => handleDeletePost(post.id)}
                                                         sx={{
-                                                            fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                                                            width: '100%',
-                                                            maxWidth: '120px'
+                                                            borderColor: '#EF5350',
+                                                            color: '#EF5350',
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeletePost(post.id);
                                                         }}
                                                     >
                                                         삭제
@@ -347,13 +348,17 @@ function FAQBoardPage() {
                                             </TableCell>
                                         )}
                                     </TableRow>
+                                    {/* 게시글 내용 표시 (확장된 경우) */}
                                     {expandedPostId === post.id && (
                                         <TableRow>
-                                            <TableCell
-                                                colSpan={3}
-                                                sx={{ padding: { xs: 2, sm: 3 } }}
-                                            >
-                                                <Typography variant="body2">
+                                            <TableCell colSpan={3}>
+                                                <Typography
+                                                    sx={{
+                                                        whiteSpace: 'pre-line', // 이 부분을 추가
+                                                        fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                                                        padding: { xs: 1, sm: 2 }
+                                                    }}
+                                                >
                                                     {post.content}
                                                 </Typography>
                                             </TableCell>
@@ -363,7 +368,7 @@ function FAQBoardPage() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={3} align="center">
+                                <TableCell align="center" colSpan={4}>
                                     게시글이 없습니다.
                                 </TableCell>
                             </TableRow>
@@ -371,46 +376,44 @@ function FAQBoardPage() {
                     </TableBody>
                 </Table>
             </TableContainer>
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={3000}
-                onClose={handleCloseSnackbar}
-                message={snackbar.message}
-                action={
-                    <IconButton
-                        size="small"
-                        aria-label="close"
-                        color="inherit"
-                        onClick={handleCloseSnackbar}
-                    >
-                        <CloseIcon fontSize="small" />
-                    </IconButton>
-                }
-            />
+
+            {/* 삭제 확인 다이얼로그 */}
             <Dialog
                 open={openDeleteDialog}
                 onClose={handleCloseDeleteDialog}
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
             >
-                <DialogTitle id="alert-dialog-title">{"게시글 삭제"}</DialogTitle>
+                <DialogTitle id="alert-dialog-title">{"게시글 삭제 확인"}</DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
                         정말로 이 게시글을 삭제하시겠습니까?
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleConfirmDelete} color="error">
+                    <Button onClick={handleConfirmDelete} sx={{ color: '#EF5350' }} autoFocus>
                         삭제
                     </Button>
-                    <Button onClick={handleCloseDeleteDialog} color="primary">
+                    <Button onClick={handleCloseDeleteDialog} sx={{ color: '#29B6F6' }}>
                         취소
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* 스낵바 */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={3000}
+                onClose={handleCloseSnackbar}
+                message={snackbar.message}
+                action={
+                    <IconButton size="small" aria-label="close" color="inherit" onClick={handleCloseSnackbar}>
+                        <CloseIcon fontSize="small" />
+                    </IconButton>
+                }
+            />
         </Box>
     );
-
 }
 
 export default FAQBoardPage;

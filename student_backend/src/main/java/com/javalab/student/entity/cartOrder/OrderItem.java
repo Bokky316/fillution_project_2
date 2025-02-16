@@ -2,7 +2,7 @@ package com.javalab.student.entity.cartOrder;
 
 import com.javalab.student.dto.cartOrder.OrderItemDto;
 import com.javalab.student.entity.BaseEntity;
-import com.javalab.student.entity.Product;
+import com.javalab.student.entity.product.Product;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;

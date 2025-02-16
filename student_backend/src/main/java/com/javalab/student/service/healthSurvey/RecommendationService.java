@@ -1,13 +1,12 @@
 package com.javalab.student.service.healthSurvey;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javalab.student.dto.healthSurvey.HealthAnalysisDTO;
 import com.javalab.student.dto.healthSurvey.ProductRecommendationDTO;
 import com.javalab.student.dto.healthSurvey.RecommendationDTO;
 import com.javalab.student.entity.Member;
-import com.javalab.student.entity.Product;
+import com.javalab.student.entity.product.Product;
 import com.javalab.student.entity.healthSurvey.*;
-import com.javalab.student.repository.ProductRepository;
+import com.javalab.student.repository.product.ProductRepository;
 import com.javalab.student.repository.healthSurvey.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

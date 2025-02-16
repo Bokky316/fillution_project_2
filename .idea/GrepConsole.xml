@@ -17,14 +17,14 @@
                   <option name="pins">
                     <list>
                       <Pin>
-                        <option name="consoleUUID" value="8979d6fb-febd-453e-b5ff-804b08143592" />
+                        <option name="consoleUUID" value="1ed55ba7-f6ef-41ca-8c47-f5657ba0058b" />
                         <option name="contentType" value="ConsoleContent" />
                         <option name="grepCompositeModel">
                           <GrepCompositeModel>
                             <option name="models">
                               <list>
                                 <GrepModel>
-                                  <option name="expression" value="ERROR" />
+                                  <option name="expression" value="error" />
                                 </GrepModel>
                               </list>
                             </option>

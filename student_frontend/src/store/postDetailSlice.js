@@ -48,11 +48,24 @@ const postDetailSlice = createSlice({
         nextPost: null,
         loading: false,
         error: null,
-        isAdmin: false
+        isAdmin: false,
+        snackbarOpen: false, // 스낵바 상태 추가
+        snackbarMessage: '' // 스낵바 메시지 상태 추가
     },
     reducers: {
         setIsAdmin: (state, action) => {
             state.isAdmin = action.payload;
+        },
+        setSnackbarOpen: (state, action) => { // 스낵바 상태 업데이트 액션 추가
+            state.snackbarOpen = action.payload;
+        },
+        setSnackbarMessage: (state, action) => { // 스낵바 메시지 업데이트 액션 추가
+            state.snackbarMessage = action.payload;
+        },
+        clearPost: (state) => { // 게시물 정보 초기화 액션 추가
+            state.post = null;
+            state.prevPost = null;
+            state.nextPost = null;
         }
     },
     extraReducers: (builder) => {
@@ -77,7 +90,7 @@ const postDetailSlice = createSlice({
             })
             .addCase(deletePost.fulfilled, (state) => {
                 state.loading = false;
-                state.post = null;
+                // state.post = null; // 게시물 정보 초기화
             })
             .addCase(deletePost.rejected, (state, action) => {
                 state.loading = false;
@@ -86,5 +99,5 @@ const postDetailSlice = createSlice({
     }
 });
 
-export const { setIsAdmin } = postDetailSlice.actions;
+export const { setIsAdmin, setSnackbarOpen, setSnackbarMessage, clearPost } = postDetailSlice.actions;
 export default postDetailSlice.reducer;

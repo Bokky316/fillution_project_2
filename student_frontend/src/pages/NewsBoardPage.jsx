@@ -26,13 +26,13 @@ function NewsBoardPage() {
     const [postToDelete, setPostToDelete] = useState(null);
 
     const {
-        posts,
+        posts = [], // 기본값을 빈 배열로 설정
         loading,
         error,
         currentPage,
         totalPages,
         deleteError
-    } = useSelector(state => state.news);
+    } = useSelector(state => state.news || {}); // news 상태가 없을 경우를 대비한 기본값 설정
 
     const auth = useSelector((state) => state.auth);
     const userRole = auth?.user?.authorities?.some(auth =>
@@ -139,24 +139,15 @@ function NewsBoardPage() {
                 maxWidth="lg"
                 mx="auto"
                 p={{ xs: 2, sm: 3, md: 4 }}
-                mb={18}
+                mb={5}
                 sx={{ overflowX: 'hidden' }}
             >
-                <Typography
-                    variant="h4"
-                    align="center"
-                    gutterBottom
-                    sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
-                >
-                    공지사항
-                </Typography>
                 {userRole === 'ADMIN' && (
                     <Box display="flex" justifyContent="flex-end" mb={2}>
                         <Button
                             variant="contained"
-                            color="primary"
+                            sx={{ backgroundColor: '#4169E1', color: 'white', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
                             onClick={() => navigate('/post/create', { state: { defaultCategory: '공지사항' } })}
-                            sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
                         >
                             게시글 등록
                         </Button>
@@ -172,34 +163,58 @@ function NewsBoardPage() {
                     }}>
                         <TableHead>
                             <TableRow sx={{ borderTop: '2px solid #888' }}>
-                                <TableCell align="center" sx={{ width: userRole === 'ADMIN' ? '15%' : '15%', fontWeight: 'bold' }}>분류</TableCell>
-                                <TableCell align="center" sx={{ width: userRole === 'ADMIN' ? '55%' : '60%', fontWeight: 'bold' }}>제목</TableCell>
-                                <TableCell align="center" sx={{ width: userRole === 'ADMIN' ? '15%' : '25%', fontWeight: 'bold' }}>작성일</TableCell>
+                                <TableCell align="center" sx={{ width: userRole === 'ADMIN' ? '25%' : '20%', fontWeight: 'bold' }}>분류</TableCell>
+                                <TableCell align="left" sx={{ width: userRole === 'ADMIN' ? '75%' : '75%', fontWeight: 'bold' }}>제목</TableCell>
                                 {userRole === 'ADMIN' && <TableCell align="center" sx={{ width: '20%', fontWeight: 'bold' }}>관리</TableCell>}
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {posts.length > 0 ? (
+                            {Array.isArray(posts) && posts.length > 0 ? (
                                 posts.map(post => (
-                                    <TableRow key={post.id} sx={{ height: 'auto' }}>
-                                        <TableCell align="center" sx={{ width: userRole === 'ADMIN' ? '10%' : '15%', padding: '25px 0px' }}>
-                                            <Typography sx={{ display: "inline-block", backgroundColor: "primary.main", color: "white", borderRadius: "20px", padding: '2px 6px', fontSize: '0.75rem', fontWeight: "bold" }}>
+                                    <TableRow
+                                        key={post.id}
+                                        sx={{
+                                            height: 'auto',
+                                            '&:hover': { cursor: 'pointer' }
+                                        }}
+                                        onClick={() => navigate(`/post/${post.id}`)}
+                                    >
+                                        <TableCell align="center" sx={{ width: userRole === 'ADMIN' ? '15%' : '15%', padding: '25px 0px' }}>
+                                            <Typography variant="body1" sx={{ fontSize: '13px' }}>
                                                 {post.category}
                                             </Typography>
                                         </TableCell>
-                                        <TableCell align="left" sx={{ width: userRole === 'ADMIN' ? '55%' : '60%', padding: 1 }}>
-                                            <Link to={`/post/${post.id}`} style={{ textDecoration: 'none', color: 'black' }}>
+                                        <TableCell align="left" sx={{ width: userRole === 'ADMIN' ? '70%' : '85%', padding: 1 }}>
+                                            <Typography fontWeight="bold" variant="body1" sx={{ fontSize: '14px' }}>
                                                 {post.title}
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell align="center" sx={{ width: userRole === 'ADMIN' ? '15%' : '25%', padding: 1 }}>
-                                            {formatDate(post.createdAt, userRole === 'ADMIN')}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ display: 'block', color: 'grey', marginTop: '4px', fontSize: '12px' }}>
+                                                {new Date(post.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').slice(0, -1)}
+                                            </Typography>
                                         </TableCell>
                                         {userRole === 'ADMIN' && (
-                                            <TableCell align="center" sx={{ width: '20%', padding: 1 }}>
+                                            <TableCell align="center" sx={{ width: '15%', padding: 1 }}>
                                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
-                                                    <Button variant="outlined" color="primary" onClick={() => handleEditPost(post.id)}>수정</Button>
-                                                    <Button variant="outlined" color="error" onClick={() => handleDeleteClick(post.id)}>삭제</Button>
+                                                    <Button
+                                                        variant="outlined"
+                                                        sx={{ borderColor: '#29B6F6', color: '#29B6F6' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditPost(post.id);
+                                                        }}
+                                                    >
+                                                        수정
+                                                    </Button>
+                                                    <Button
+                                                        variant="outlined"
+                                                        sx={{ borderColor: '#EF5503', color: '#EF5503' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteClick(post.id);
+                                                        }}
+                                                    >
+                                                        삭제
+                                                    </Button>
                                                 </Box>
                                             </TableCell>
                                         )}
@@ -207,50 +222,52 @@ function NewsBoardPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={userRole === 'ADMIN' ? 4 : 3} align="center">게시글이 없습니다.</TableCell>
+                                    <TableCell colSpan={userRole === 'ADMIN' ? 3 : 2} align="center">게시글이 없습니다.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
                     </Table>
                 </TableContainer>
 
-            <Snackbar
-                anchorOrigin={{
-                    vertical: 'bottom',
-                    horizontal: 'left',
-                }}
-                open={snackbarOpen}
-                autoHideDuration={3000}
-                onClose={handleCloseSnackbar}
-                message={snackbarMessage}
-                action={
-                    <IconButton size="small" aria-label="close" color="inherit" onClick={handleCloseSnackbar}>
-                        <CloseIcon fontSize="small" />
-                    </IconButton>
-                }
-            />
-            <Dialog
-                open={deleteDialogOpen}
-                onClose={handleDeleteCancel}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <DialogTitle id="alert-dialog-title">
-                    게시글 삭제
-                </DialogTitle>
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                        이 게시글을 삭제하시겠습니까?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleDeleteConfirm} color="error" autoFocus>
-                        삭제
-                    </Button>
-                    <Button onClick={handleDeleteCancel}>취소</Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
+                <Snackbar
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                    }}
+                    open={snackbarOpen}
+                    autoHideDuration={3000}
+                    onClose={handleCloseSnackbar}
+                    message={snackbarMessage}
+                    action={
+                        <IconButton size="small" aria-label="close" color="inherit" onClick={handleCloseSnackbar}>
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    }
+                />
+                <Dialog
+                    open={deleteDialogOpen}
+                    onClose={handleDeleteCancel}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                >
+                    <DialogTitle id="alert-dialog-title">
+                        게시글 삭제
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                            이 게시글을 삭제하시겠습니까?
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleDeleteConfirm} sx={{ color: '#EF5350' }} autoFocus>
+                            삭제
+                        </Button>
+                        <Button onClick={handleDeleteCancel} sx={{ color: '#29B6F6' }}>
+                            취소
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Box>
     );
 
 

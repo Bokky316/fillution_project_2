@@ -1,9 +1,9 @@
 package com.javalab.student.service.healthSurvey;
 
 import com.javalab.student.dto.healthSurvey.ProductRecommendationDTO;
-import com.javalab.student.entity.Product;
-import com.javalab.student.entity.ProductIngredient;
-import com.javalab.student.repository.ProductRepository;
+import com.javalab.student.entity.product.Product;
+import com.javalab.student.entity.product.ProductIngredient;
+import com.javalab.student.repository.product.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -2,12 +2,11 @@ package com.javalab.student.service;
 
 import com.javalab.student.dto.SubscriptionResponseDto;
 import com.javalab.student.dto.SubscriptionUpdateNextItemDto;
-import com.javalab.student.dto.SubscriptionUpdateNextItemRequestDto;
-import com.javalab.student.entity.Product;
+import com.javalab.student.entity.product.Product;
 import com.javalab.student.entity.Subscription;
 import com.javalab.student.entity.SubscriptionItem;
 import com.javalab.student.entity.SubscriptionNextItem;
-import com.javalab.student.repository.ProductRepository;
+import com.javalab.student.repository.product.ProductRepository;
 import com.javalab.student.repository.SubscriptionItemRepository;
 import com.javalab.student.repository.SubscriptionNextItemRepository;
 import com.javalab.student.repository.SubscriptionRepository;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;

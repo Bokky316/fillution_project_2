@@ -1,16 +1,17 @@
 package com.javalab.student.service.cartOrder;
 
-import com.javalab.student.dto.cartOrder.CartDetailDto;
 import com.javalab.student.dto.cartOrder.CartItemDto;
+import com.javalab.student.dto.cartOrder.CartDetailDto;
+import com.javalab.student.dto.cartOrder.CartOrderRequestDto;
+import com.javalab.student.dto.cartOrder.OrderDto;
 import com.javalab.student.entity.Member;
-import com.javalab.student.entity.Product;
-import com.javalab.student.entity.ProductImg;
+import com.javalab.student.entity.product.Product;
 import com.javalab.student.entity.cartOrder.Cart;
 import com.javalab.student.entity.cartOrder.CartItem;
-import com.javalab.student.repository.MemberRepository;
-import com.javalab.student.repository.ProductRepository;
 import com.javalab.student.repository.cartOrder.CartItemRepository;
 import com.javalab.student.repository.cartOrder.CartRepository;
+import com.javalab.student.repository.MemberRepository;
+import com.javalab.student.repository.product.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
- * 장바구니 관련 기능을 제공하는 서비스 클래스
- * 장바구니에 상품 추가, 목록 조회, 수정, 삭제 등의 기능을 수행한다.
+ * 장바구니 관련 비즈니스 로직을 처리하는 서비스 클래스
  */
 @Slf4j
 @Service
@@ -36,52 +34,52 @@ public class CartService {
     private final MemberRepository memberRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final OrderService orderService;
 
     /**
-     * 장바구니에 상품을 추가하는 메서드
+     * 장바구니에 상품을 추가합니다.
      *
-     * @param cartItemDto 장바구니에 추가할 상품 정보 DTO
-     * @param email 현재 사용자의 이메일
+     * @param cartItemDto 장바구니에 추가할 상품 정보
+     * @param email 사용자 이메일
      * @return 추가된 장바구니 아이템의 ID
-     * @throws EntityNotFoundException 상품 또는 회원을 찾을 수 없을 경우 발생
      */
     @Transactional
     public Long addCart(CartItemDto cartItemDto, String email) {
-        // 상품과 회원 정보를 조회
-        Product product = productRepository.findById(cartItemDto.getProductId())
-                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + cartItemDto.getProductId()));
-        Member member = memberRepository.findByEmail(email);
-        if (member == null) {
-            throw new EntityNotFoundException("회원을 찾을 수 없습니다. Email: " + email);
-        }
+        try {
+            Product product = productRepository.findById(cartItemDto.getProductId())
+                    .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + cartItemDto.getProductId()));
+            Member member = memberRepository.findByEmail(email);
+            if (member == null) {
+                throw new EntityNotFoundException("회원을 찾을 수 없습니다. Email: " + email);
+            }
 
-        // 회원의 장바구니를 조회하거나 새로 생성
-        Cart cart = cartRepository.findByMemberId(member.getId())
-                .orElseGet(() -> {
-                    Cart newCart = Cart.createCart(member);
-                    return cartRepository.save(newCart);
-                });
+            Cart cart = cartRepository.findByMemberId(member.getId())
+                    .orElseGet(() -> {
+                        Cart newCart = Cart.createCart(member);
+                        return cartRepository.save(newCart);
+                    });
 
-        // 장바구니에 이미 같은 상품이 있는지 확인
-        CartItem savedCartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId());
+            CartItem savedCartItem = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId());
 
-        if (savedCartItem != null) {
-            // 이미 있다면 수량만 증가
-            savedCartItem.addQuantity(cartItemDto.getQuantity());
-            return savedCartItem.getId();
-        } else {
-            // 없다면 새로운 CartItem 생성
-            CartItem cartItem = CartItem.createCartItem(cart, product, cartItemDto.getQuantity());
-            cartItemRepository.save(cartItem);
-            return cartItem.getId();
+            if (savedCartItem != null) {
+                savedCartItem.addQuantity(cartItemDto.getQuantity());
+                return savedCartItem.getId();
+            } else {
+                CartItem cartItem = CartItem.createCartItem(cart, product, cartItemDto.getQuantity());
+                cartItemRepository.save(cartItem);
+                return cartItem.getId();
+            }
+        } catch (Exception e) {
+            log.error("장바구니 추가 중 오류 발생", e);
+            throw new RuntimeException("장바구니 추가 중 오류가 발생했습니다.", e);
         }
     }
 
     /**
-     * 장바구니 목록을 조회하는 메서드
+     * 사용자의 장바구니 목록을 조회합니다.
      *
-     * @param email 현재 사용자의 이메일
-     * @return 장바구니 상세 정보 DTO 리스트
+     * @param email 사용자 이메일
+     * @return 장바구니 상세 정보 목록
      */
     @Transactional(readOnly = true)
     public List<CartDetailDto> getCartList(String email) {
@@ -90,16 +88,15 @@ public class CartService {
         if (cart == null) {
             return new ArrayList<>();
         }
-        return getCartDetailList(cart.getId());
+        return cartItemRepository.findCartDetailDtoList(cart.getId());
     }
 
     /**
-     * 장바구니 아이템의 소유자를 확인하는 메서드
+     * 장바구니 아이템의 소유자를 확인합니다.
      *
-     * @param cartItemId 확인할 장바구니 아이템 ID
-     * @param email 현재 사용자의 이메일
-     * @return 현재 사용자가 장바구니 아이템의 소유자인지 여부
-     * @throws EntityNotFoundException 장바구니 아이템을 찾을 수 없을 경우 발생
+     * @param cartItemId 장바구니 아이템 ID
+     * @param email 사용자 이메일
+     * @return 소유자 일치 여부
      */
     @Transactional(readOnly = true)
     public boolean validateCartItem(Long cartItemId, String email) {
@@ -111,25 +108,29 @@ public class CartService {
     }
 
     /**
-     * 장바구니 아이템의 수량을 업데이트하는 메서드
+     * 장바구니 아이템의 수량을 업데이트합니다.
      *
-     * @param cartItemId 업데이트할 장바구니 아이템 ID
-     * @param quantity 새로운 수량
-     * @throws EntityNotFoundException 장바구니 아이템을 찾을 수 없을 경우 발생
+     * @param cartItemId 장바구니 아이템 ID
+     * @param count 변경할 수량
      */
     @Transactional
-    public void updateCartItemCount(Long cartItemId, int quantity) {
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new EntityNotFoundException("장바구니 아이템을 찾을 수 없습니다."));
-        cartItem.updateQuantity(quantity);
-        cartItemRepository.save(cartItem);
+    public void updateCartItemCount(Long cartItemId, int count) {
+        try {
+            CartItem cartItem = cartItemRepository.findById(cartItemId)
+                    .orElseThrow(() -> new EntityNotFoundException("장바구니 아이템을 찾을 수 없습니다."));
+            cartItem.updateQuantity(count);
+            cartItemRepository.save(cartItem);  // 명시적 저장
+            log.info("장바구니 아이템 수량 업데이트 성공 - ID: {}, 새 수량: {}", cartItemId, count);
+        } catch (Exception e) {
+            log.error("장바구니 아이템 수량 업데이트 실패 - ID: {}, 요청 수량: {}", cartItemId, count, e);
+            throw new RuntimeException("장바구니 아이템 수량 업데이트에 실패했습니다.", e);
+        }
     }
 
     /**
-     * 장바구니 아이템을 삭제하는 메서드
+     * 장바구니 아이템을 삭제합니다.
      *
      * @param cartItemId 삭제할 장바구니 아이템 ID
-     * @throws EntityNotFoundException 장바구니 아이템을 찾을 수 없을 경우 발생
      */
     public void deleteCartItem(Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
@@ -138,26 +139,60 @@ public class CartService {
     }
 
     /**
-     * 상품의 재고를 확인하는 메서드
+     * 장바구니에서 선택한 상품들을 주문합니다.
      *
-     * @param productId 확인할 상품 ID
-     * @param quantity 구매 수량
-     * @return 재고가 충분한지 여부
-     * @throws EntityNotFoundException 상품을 찾을 수 없을 경우 발생
+     * @param cartOrderRequestDto 장바구니 주문 요청 정보
+     * @param email 사용자 이메일
+     * @return 생성된 주문의 ID
+     */
+    public Long orderCartItem(CartOrderRequestDto cartOrderRequestDto, String email) {
+        List<OrderDto> orderDtoList = new ArrayList<>();
+
+        for (CartOrderRequestDto.CartOrderItem cartOrderItem : cartOrderRequestDto.getCartOrderItems()) {
+            CartItem cartItem = cartItemRepository.findById(cartOrderItem.getCartItemId())
+                    .orElseThrow(() -> new EntityNotFoundException("장바구니 아이템을 찾을 수 없습니다."));
+
+            OrderDto orderDto = new OrderDto();
+            orderDto.setProductId(cartItem.getProduct().getId());
+            orderDto.setCount(cartItem.getQuantity());
+            orderDtoList.add(orderDto);
+        }
+
+        Long orderId = orderService.orders(orderDtoList, email);
+
+        for (CartOrderRequestDto.CartOrderItem cartOrderItem : cartOrderRequestDto.getCartOrderItems()) {
+            CartItem cartItem = cartItemRepository.findById(cartOrderItem.getCartItemId())
+                    .orElseThrow(() -> new EntityNotFoundException("장바구니 아이템을 찾을 수 없습니다."));
+            cartItemRepository.delete(cartItem);
+        }
+
+        return orderId;
+    }
+
+    /**
+     * 상품의 재고를 확인합니다.
+     *
+     * @param productId 상품 ID
+     * @param quantity 확인할 수량
+     * @return 재고 충분 여부
      */
     @Transactional(readOnly = true)
     public boolean checkStock(Long productId, int quantity) {
+        log.debug("재고 확인 - 상품 ID: {}, 요청 수량: {}", productId, quantity);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + productId));
+                .orElseThrow(() -> {
+                    log.error("상품을 찾을 수 없음 - 상품 ID: {}", productId);
+                    return new EntityNotFoundException("상품을 찾을 수 없습니다. ID: " + productId);
+                });
+        log.debug("상품 재고: {}", product.getStock());
         return product.getStock() >= quantity;
     }
 
     /**
-     * 장바구니 아이템 ID로 상품 ID를 조회하는 메서드
+     * 장바구니 아이템 ID로 상품 ID를 조회합니다.
      *
-     * @param cartItemId 조회할 장바구니 아이템 ID
+     * @param cartItemId 장바구니 아이템 ID
      * @return 상품 ID
-     * @throws EntityNotFoundException 장바구니 아이템을 찾을 수 없을 경우 발생
      */
     @Transactional(readOnly = true)
     public Long getItemIdByCartItemId(Long cartItemId) {
@@ -167,75 +202,18 @@ public class CartService {
     }
 
     /**
-     * 장바구니 아이템의 상세 정보를 조회하는 메서드
+     * 특정 장바구니 아이템의 상세 정보를 조회합니다.
      *
-     * @param cartItemId 조회할 장바구니 아이템 ID
-     * @return 장바구니 상세 정보 DTO
-     * @throws EntityNotFoundException 장바구니 아이템을 찾을 수 없을 경우 발생
+     * @param cartItemId 장바구니 아이템 ID
+     * @return 장바구니 아이템 상세 정보
+     * @throws EntityNotFoundException 장바구니 아이템을 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
     public CartDetailDto getCartItemDetail(Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new EntityNotFoundException("장바구니 아이템을 찾을 수 없습니다. ID: " + cartItemId));
 
-        Product product = cartItem.getProduct();
-        String imageUrl = product.getProductImgList().stream()
-                .filter(img -> "대표".equals(img.getImageType()))
-                .findFirst()
-                .map(ProductImg::getImageUrl)
-                .orElse(null);
-
-        return CartDetailDto.builder()
-                .cartItemId(cartItem.getId())
-                .name(product.getName())
-                .quantity(cartItem.getQuantity())
-                .price(product.getPrice())
-                .imageUrl(imageUrl)
-                .build();
+        return CartDetailDto.of(cartItem);
     }
 
-
-    /**
-     * 장바구니를 비우는 메서드
-     *
-     * @param memberId 비울 장바구니의 회원 ID
-     */
-    public void clearCart(Long memberId) {
-        Optional<Cart> optionalCart = cartRepository.findByMemberId(memberId);
-        if (optionalCart.isPresent()) {
-            Cart cart = optionalCart.get();
-            List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getId());
-            cartItemRepository.deleteAll(cartItems);
-        } else {
-            log.warn("clearCart - 해당 memberId {} 에 대한 장바구니가 존재하지 않습니다.", memberId);
-        }
-    }
-
-    /**
-     * 장바구니 상세 정보 DTO 리스트를 조회하는 메서드
-     *
-     * @param cartId 장바구니 ID
-     * @return 장바구니 상세 정보 DTO 리스트
-     */
-    public List<CartDetailDto> getCartDetailList(Long cartId) {
-        List<CartItem> cartItems = cartItemRepository.findByCartId(cartId);
-        return cartItems.stream()
-                .map(cartItem -> {
-                    Product product = cartItem.getProduct();
-                    String imageUrl = product.getProductImgList().stream()
-                            .filter(img -> "대표".equals(img.getImageType()))
-                            .findFirst()
-                            .map(ProductImg::getImageUrl)
-                            .orElse(null);
-
-                    return CartDetailDto.builder()
-                            .cartItemId(cartItem.getId())
-                            .name(product.getName())
-                            .quantity(cartItem.getQuantity())
-                            .price(product.getPrice())
-                            .imageUrl(imageUrl)
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
 }

@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchProducts, fetchCategories } from "@features/product/productApi";
+import { fetchProducts, fetchCategories,fetchCategoriesByIngredient } from "@features/product/productApi";
 
 const productSlice = createSlice({
     name: "products",
@@ -9,8 +9,13 @@ const productSlice = createSlice({
         totalRows: 0, // 전체 상품 개수
         loading: false, // 로딩 상태
         error: null, // 에러 상태
+        selectedCategories: [] // ✅ 선택된 영양성분 기반 카테고리 추가
     },
-    reducers: {},
+    reducers: {
+        clearSelectedCategories: (state) => {
+            state.selectedCategories = [];
+        }
+    },
     extraReducers: (builder) => {
         builder
             // 상품 로딩 시작
@@ -32,8 +37,15 @@ const productSlice = createSlice({
             // 카테고리 로딩 성공
             .addCase(fetchCategories.fulfilled, (state, action) => {
                 state.categories = action.payload || []; // 카테고리 목록 업데이트
+            })
+            // ✅ 영양성분 선택 시 카테고리 자동 업데이트 처리
+            .addCase(fetchCategoriesByIngredient.fulfilled, (state, action) => {
+                state.selectedCategories = action.payload || [];
+            })
+            .addCase(fetchCategoriesByIngredient.rejected, (state, action) => {
+                state.error = action.payload;
             });
     },
 });
-
+export const { clearSelectedCategories } = productSlice.actions;
 export default productSlice.reducer;

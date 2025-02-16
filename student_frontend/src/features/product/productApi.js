@@ -45,3 +45,29 @@ export const fetchCategories = createAsyncThunk(
         }
     }
 );
+
+// 영양성분 선택 시 카테고리 자동 매핑 API
+export const fetchCategoriesByIngredient = createAsyncThunk(
+    "products/fetchCategoriesByIngredient",
+    async (ingredientIds, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch(`${API_URL}ingredients/categories?ingredientIds=${ingredientIds.join(',')}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('카테고리 자동 매핑 실패');
+            }
+
+            return await response.json();
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
