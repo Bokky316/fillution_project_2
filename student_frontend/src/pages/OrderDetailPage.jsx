@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Button, TextField, Box, Typography, Paper } from "@mui/material";
+import { Button, TextField, Box, Typography, Paper, Radio, RadioGroup, FormControlLabel, FormControl, Divider } from "@mui/material";
 import { API_URL } from "@/utils/constants";
 import { fetchWithAuth } from "@/features/auth/fetchWithAuth";
 import { useDispatch, useSelector } from "react-redux";
 import { createOrder } from "@/store/orderSlice";
+import "@/styles/OrderDetail.css";
 
 const OrderDetail = () => {
   const location = useLocation();
@@ -25,6 +26,7 @@ const OrderDetail = () => {
   const [merchantId, setMerchantId] = useState("");
   const [order, setOrder] = useState(null);
   const [isImpReady, setIsImpReady] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("kakaopay");
 
   useEffect(() => {
     const id = fetchMerchantId();
@@ -90,33 +92,50 @@ const OrderDetail = () => {
     IMP.init(merchantId);
 
     const paymentData = {
-      pg: "kakaopay",
-      pay_method: "card",
-      merchant_uid: order.id,
-      name: order.items[0].name,
-      amount: order.totalAmount,
-      buyer_email: order.buyerEmail,
-      buyer_name: order.buyerName,
-      buyer_tel: order.buyerTel,
-      buyer_addr: order.buyerAddr,
-      buyer_postcode: order.buyerPostcode,
-      m_redirect_url: "http://localhost:3000/payResult",
-    };
+           pg: paymentMethod, // 선택한 결제 수단으로 변경
+           pay_method: "card",
+           merchant_uid: order.id,
+           name: order.items[0].name,
+           amount: finalAmount, // 최종 결제 금액 사용
+           buyer_email: email,
+           buyer_name: name,
+           buyer_tel: phone,
+           buyer_addr: `${address1} ${address2}`,
+           buyer_postcode: zipCode,
+       };
 
-    IMP.request_pay(paymentData, async (rsp) => {
-      if (rsp.success) {
-        alert("결제가 완료되었습니다!");
-        console.log("결제 완료 응답:", rsp);
-        const response = await processPayment(rsp);
-        if (response.ok) {
-          const data = await response.json();
-          navigate("/payResult", { state: { paymentInfo: data } });
-        }
-      } else {
-        alert(`결제 실패: ${rsp.error_msg}`);
-      }
-    });
-  };
+       IMP.request_pay(paymentData, async (rsp) => {
+           if (rsp.success) {
+               console.log("결제 완료 응답:", rsp);
+               try {
+                   const response = await processPayment(rsp);
+                   if (response.ok) {
+                       const data = await response.json();
+                       navigate("/payResult", {
+                           state: {
+                               paymentInfo: {
+                                   ...data,
+                                   amount: finalAmount,
+                                   paymentMethod: paymentMethod,
+                                   merchantUid: order.id,
+                                   impUid: rsp.imp_uid,
+                                   status: "PAYMENT_COMPLETED",
+                                   paidAt: Math.floor(Date.now() / 1000) // 현재 시간을 Unix timestamp로 변환
+                               }
+                           }
+                       });
+                   } else {
+                       throw new Error('서버 응답 오류');
+                   }
+               } catch (error) {
+                   console.error("결제 처리 중 오류 발생:", error);
+                   alert("결제는 완료되었지만 서버 처리 중 오류가 발생했습니다. 고객센터에 문의해주세요.");
+               }
+           } else {
+               alert(`결제 실패: ${rsp.error_msg}`);
+           }
+       });
+   };
 
   const processPayment = async (rsp) => {
     const paymentRequest = {
@@ -143,12 +162,34 @@ const OrderDetail = () => {
     });
   };
 
+  const isSubscription = purchaseType === 'subscription';
+
+  const calculateDiscount = () => {
+    let discount = 0;
+    if (isSubscription) {
+      discount += 3000; // 정기구독 할인
+    }
+    return discount;
+  };
+
+    const handlePaymentMethodChange = (event) => {
+        setPaymentMethod(event.target.value);
+    };
+
+  const discount = calculateDiscount();
+  const shippingFee = totalAmount >= 50000 ? 0 : 3000;
+  const finalAmount = totalAmount + shippingFee - discount;
+
   return (
     <Box sx={{ maxWidth: 800, margin: "auto", padding: 3 }}>
       <Typography variant="h4" gutterBottom>
-        주문서
+        주문서 작성
       </Typography>
       <Paper sx={{ padding: 3 }}>
+        {/* 제품 정보 */}
+        <Typography variant="h6" gutterBottom>
+          제품 정보
+        </Typography>
         {selectedItems.map((item, index) => (
           <Box key={index} display="flex" alignItems="center" mb={2}>
             <img
@@ -157,17 +198,31 @@ const OrderDetail = () => {
               style={{ width: 100, height: 100, marginRight: 20 }}
             />
             <Box>
-              <Typography variant="h6">{item.name}</Typography>
-              <Typography variant="body1">가격: {item.price}원</Typography>
-              <Typography variant="body1">수량: {item.quantity}</Typography>
+              <Typography variant="subtitle1">{item.name}</Typography>
+              <Typography variant="body2">{item.quantity}개 x {item.price}원</Typography>
             </Box>
           </Box>
         ))}
 
+        {/* 합계 금액 */}
         <Typography variant="h6" mt={3}>
           총 주문 금액: {calculateTotalPrice()}원
         </Typography>
 
+        {/* 할인 내역 */}
+        <Typography variant="h6" mt={3} gutterBottom>
+          할인 내역
+        </Typography>
+        <Box display="flex" justifyContent="space-between" mt={2}>
+          <Typography>배송비 무료</Typography>
+          <Typography>-{shippingFee === 0 ? 3000 : 0}원</Typography>
+        </Box>
+        <Box display="flex" justifyContent="space-between" mt={2}>
+          <Typography>정기구독 할인</Typography>
+          <Typography>-{discount}원</Typography>
+        </Box>
+
+        {/* 배송 정보 */}
         <Typography variant="h6" mt={3} gutterBottom>
           배송 정보
         </Typography>
@@ -234,25 +289,71 @@ const OrderDetail = () => {
 
       {order && (
         <Paper sx={{ padding: 3, marginTop: 3 }}>
+          {/* 결제 정보 */}
           <Typography variant="h5" gutterBottom>
-            결제 정보
+            결제 정보 등록
           </Typography>
-          <p>주문 번호: {order.id}</p>
-          <p>총 결제 금액: {order.totalAmount}원</p>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={handlePayment}
-            disabled={!isImpReady}
-          >
-            결제하기
-          </Button>
+{/*           <Box display="flex" justifyContent="space-between" mt={2}> */}
+{/*             <Typography>제품합계금액</Typography> */}
+{/*             <Typography>{calculateTotalPrice()}원</Typography> */}
+{/*           </Box> */}
+{/*           <Box display="flex" justifyContent="space-between" mt={2}> */}
+{/*             <Typography>기본 배송비</Typography> */}
+{/*             <Typography>{shippingFee}원</Typography> */}
+{/*           </Box> */}
+{/*           <Box display="flex" justifyContent="space-between" mt={2}> */}
+{/*             <Typography>총 할인금액</Typography> */}
+{/*             <Typography>-{discount}원</Typography> */}
+{/*           </Box> */}
+{/*           <Divider sx={{ my: 2 }} /> */}
+{/*           <Box display="flex" justifyContent="space-between" mt={2}> */}
+{/*             <Typography variant="h6">총 결제금액</Typography> */}
+{/*             <Typography variant="h6">{finalAmount}원</Typography> */}
+{/*           </Box> */}
+
+          {/* 결제 수단 선택 */}
+            <FormControl component="fieldset" className="payment-method-select">
+                <RadioGroup
+                    aria-label="paymentMethod"
+                    name="paymentMethod"
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                >
+                    <FormControlLabel
+                        value="kakaopay"
+                        control={<Radio />}
+                        label="카카오페이"
+                    />
+                    <FormControlLabel
+                        value="payco"
+                        control={<Radio />}
+                        label="페이코"
+                    />
+                    <FormControlLabel
+                        value="card"
+                        control={<Radio />}
+                        label="신용 / 체크카드"
+                    />
+                </RadioGroup>
+            </FormControl>
+
+            {/* 결제하기 버튼 */}
+            <Box mt={2} textAlign="center">
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    size="large"
+                    onClick={handlePayment}
+                    disabled={!isImpReady}
+                    className="payment-button"
+                >
+                    {finalAmount}원 결제하기
+                </Button>
+            </Box>
         </Paper>
       )}
     </Box>
   );
-
 };
 
 export default OrderDetail;
